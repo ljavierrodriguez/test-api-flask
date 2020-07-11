@@ -19,3 +19,8 @@
 
     ### EJecutar para enviar las migraciones hacia la base de datos
     $ python app.py db upgrade
+
+
+### Iniciar el servidor
+
+    $ python app.py runserver
