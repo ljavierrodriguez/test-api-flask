@@ -8,6 +8,7 @@ class Test(db.Model):
     name = db.Column(db.String(200), nullable=False)
     email = db.Column(db.String(200), nullable=False, unique=True)
     profile = db.relationship("Profile", backref="test", uselist=False)
+    contacts = db.relationship("Contact", backref="test")
 
     def save(self):
         db.session.add(self) # INSERT INTO
@@ -20,15 +21,18 @@ class Test(db.Model):
         db.session.delete(self) # DELETE FROM
         db.session.commit()
 
+    def get_contacts(self):
+        contacts = list(map(lambda contact: contact.serialize(), self.contacts))
+        return contacts
+
     def serialize(self):
         return {
             "id": self.id,
             "name": self.name,
             "email": self.email,
-            "profile": self.profile.serialize()
+            "profile": self.profile.serialize(),
+            "contacts": self.get_contacts()
         }
-
-
 
 class Profile(db.Model):
     __tablename__ = 'profiles'
@@ -55,4 +59,30 @@ class Profile(db.Model):
             "bio": self.bio,
             "facebook": self.facebook,
             "twitter": self.twitter
+        }
+
+class Contact(db.Model):
+    __tablename__ = 'contacts'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(200), nullable=False)
+    phone = db.Column(db.String(100), nullable=False)
+    test_id = db.Column(db.Integer, db.ForeignKey("tests.id"), nullable=False)
+
+    def save(self):
+        db.session.add(self) # INSERT INTO
+        db.session.commit()
+
+    def update(self):
+        db.session.commit() # UPDATE 
+
+    def delete(self):
+        db.session.delete(self) # DELETE FROM
+        db.session.commit()
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "phone": self.phone,
+            "test": self.test.name
         }

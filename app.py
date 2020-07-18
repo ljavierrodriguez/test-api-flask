@@ -2,7 +2,7 @@ from flask import Flask, jsonify, render_template, request
 from flask_script import Manager
 from flask_migrate import Migrate, MigrateCommand
 from flask_cors import CORS
-from models import db, Test, Profile
+from models import db, Test, Profile, Contact
 
 app = Flask(__name__)
 app.url_map.strict_slashes = False
@@ -76,6 +76,51 @@ def profile():
     profile.update()
     test = profile.test.serialize()
     return jsonify(test), 200
+
+
+@app.route("/contacts", methods=['GET', 'POST'])
+@app.route("/contacts/<int:id>", methods=['GET', 'PUT', 'DELETE'])
+def contacts(id = None):
+    if request.method == 'GET':
+        if id is not None:
+            contact = Contact.query.get(id) # None por defecto si no consigue el registro
+            if contact:
+                return jsonify(contact.serialize()), 200
+            return jsonify({"msg": "Contact not found"}), 404
+        else:
+            contacts = Contact.query.all()
+            contacts = list(map(lambda test: contact.serialize(), contacts))
+            return jsonify(contacts), 200
+
+    if request.method == 'POST':
+        name = request.json.get("name", None)
+        phone = request.json.get("phone", None)
+        test_id = request.json.get("test_id", None)
+
+        if not name:
+            return jsonify({"msg": "Name is required"}), 400
+        if not phone:
+            return jsonify({"msg": "Phone is required"}), 400
+        if not test_id:
+            return jsonify({"msg": "Test Id is required"}), 400
+
+        test = Test.query.get(test_id)
+        if not test:
+            return jsonify({"msg": "Test Not Found"}), 400
+
+        contact = Contact()
+        contact.name = name
+        contact.phone = phone
+        contact.test_id = test_id
+        contact.save()
+
+        #db.session.add(test)
+        #db.session.commit()
+        return jsonify(contact.serialize()), 201
+    if request.method == 'PUT':
+        return jsonify({"msg": "Ingresando por el metodo PUT"}), 200
+    if request.method == 'DELETE':
+        return jsonify({"msg": "Ingresando por el metodo DELETE"}), 200
 
 if __name__ == "__main__":
     manager.run()
